@@ -122,3 +122,16 @@ class Office365(object):
 			endpoint='drives/{drive_id}/root/children'.format(drive_id=drive_id) 	
 				
 		return self.__send_request__(endpoint=endpoint, method='GET', params=params) 	
+	def get_drive_items_by_item(self, drive_id=None, item_id=None, params=None):
+		
+		return self.__send_request__(endpoint='drives/{drive_id}/items/{item_id}/children'.format(drive_id=drive_id, item_id=item_id), method='GET', params=params) 	
+
+	def download_file_from_drive(self, user_id='company@office.org', item_id=None, params=None):
+
+		return self.__send_request__(endpoint='users/{user_id}/drive/items/{item_id}/content'.format(user_id=user_id, item_id=item_id), method='GET', params=params).content 
+
+	def move_file(self, drive_id=None, item_id=None, new_file_name=None, new_parent_folder_id=None):
+
+		item_info = {'parentReference':{'id':new_parent_folder_id}, 'name':new_file_name}
+		endpoint = 'drives/{drive_id}/items/{item_id}'.format(drive_id=drive_id, item_id=item_id)
+		return self.__send_request__(endpoint=endpoint, method='PATCH', data=item_info) 	
