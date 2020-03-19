@@ -134,4 +134,71 @@ class Office365(object):
 
 		item_info = {'parentReference':{'id':new_parent_folder_id}, 'name':new_file_name}
 		endpoint = 'drives/{drive_id}/items/{item_id}'.format(drive_id=drive_id, item_id=item_id)
-		return self.__send_request__(endpoint=endpoint, method='PATCH', data=item_info) 	
+		return self.__send_request__(endpoint=endpoint, method='PATCH', data=item_info) 
+		def download_file(self, drive_id=None, user_id=None, item_id=None, sub_folder_path=None, download_location='Sharepoint', params=None):
+
+		if download_location == 'Sharepoint':
+
+			if sub_folder_path:
+				endpoint='drives/{drive_id}/root:/{sub_folder_path}:/{item_id}/content'.format(drive_id=drive_id, sub_folder_path=sub_folder_path, item_id=item_id)
+			else:
+				endpoint='drives/{drive_id}/items/{item_id}/content'.format(drive_id=drive_id, item_id=item_id)
+	
+		elif download_location == 'OneDrive':
+			
+			if sub_folder_path:
+				endpoint='users/{user_id}/root:/{sub_folder_path}:/{item_id}/content'.format(drive_id=drive_id, file_name=file_name, sub_folder_path=sub_folder_path)		
+			else:
+				endpoint='users/{user_id}/drive/items/{item_id}/content'.format(user_id=user_id, item_id=item_id, file_name=file_name)
+					
+		else:
+			raise Exception('Not a valid input')
+		
+		return self.__send_request__(endpoint=endpoint, method='GET', params=params).content 
+
+	def upload_file(self, drive_id=None, file_name=None, file_path=None, user_id=None, item_id=None, sub_folder_path=None, upload_location='Sharepoint', params=None):
+
+		if upload_location == 'Sharepoint':
+
+			if sub_folder_path:
+				endpoint='drives/{drive_id}/root:/{sub_folder_path}/{file_name}:/content'.format(drive_id=drive_id, file_name=file_name, sub_folder_path=sub_folder_path)
+			elif item_id:
+				endpoint='drives/{drive_id}/drive/items/{item_id}:/{file_name}:/content'.format(drive_id=drive_id, file_name=file_name, item_id=item_id)
+			else:
+				endpoint = 'drives/{drive_id}/root/children/{file_name}/content'.format(drive_id=drive_id, file_name=file_name)
+	
+		elif upload_location == 'OneDrive':
+			
+			if sub_folder_path:
+				endpoint='users/{user_id}/root:/{sub_folder_path}/{file_name}:/content'.format(drive_id=drive_id, file_name=file_name, sub_folder_path=sub_folder_path)		
+			elif item_id:
+				endpoint='users/{user_id}/drive/items/{item_id}:/{file_name}:/content'.format(user_id=user_id, item_id=item_id, file_name=file_name)
+			else:
+				endpoint='users/{user_id}/root/children/{file_name}/content'.format(user_id=user_id, file_name=file_name)
+					
+		else:
+			raise Exception('Not a valid input')
+
+		with open(file_path, 'rb') as file_handle:
+			
+			file_data = file_handle.read()
+			return self.__send_request__(endpoint=endpoint, method='PUT', params=params, data=file_data) 	
+	
+	def upload_file_to_drive(self, drive_id=None, file_name=None, params=None, file_path=None, sub_folder=None):
+		
+		with open(file_path, 'rb') as file_handle:
+			
+			file_data = file_handle.read()
+			
+			if sub_folder:
+				return self.__send_request__(endpoint='drives/{drive_id}/root:/{sub_folder}/{file_name}:/content'.format(drive_id=drive_id, file_name=file_name, sub_folder=sub_folder), 
+						method='PUT', params=params, data=file_data) 	
+			else:
+				return self.__send_request__(endpoint='drives/{drive_id}/root/children/{file_name}/content'.format(drive_id=drive_id, file_name=file_name), method='PUT', params=params, data=file_data) 	
+	
+	def upload_file_to_onedrive(self, user_id='user@office.com', file_name=None, item_id=None, file_path=None, params=None):
+		
+		with open(file_path, 'rb') as file_handle:
+			
+			file_data = file_handle.read()
+			return self.__send_request__(endpoint='users/{user_id}/drive/items/{item_id}:/{file_name}:/content'.format(user_id=user_id, item_id=item_id, file_name=file_name), method='PUT', params=params, data=file_data)
